@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Initialize Firebase Database</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h1>Firebase Database Initializer</h1>
+    <button onclick="initializeDatabase()">Initialize Database</button>
+    <div id="status"></div>
+
+    <script>
+        // Your Firebase config - REPLACE WITH YOUR ACTUAL CONFIG
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "https://mobileposfinal-8e080-default-rtdb.firebaseio.com/",
+            projectId: "mobileposfinal-8e080",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        async function initializeDatabase() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Initializing...';
+            
+            try {
+                // 1. Create default teacher
+                const teacherRef = await database.ref('teachers').push({
+                    name: 'Teacher Account',
+                    email: 'teacher@school.com',
+                    password: 'teacher123',
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                });
+                
+                // 2. Create sample students with accounts
+                const students = [
+                    { name: 'CARL JUAN', username: 'carl123', password: 'password123' },
+                    { name: 'MARIA SANTOS', username: 'maria123', password: 'password123' },
+                    { name: 'JUAN DELA CRUZ', username: 'juan123', password: 'password123' },
+                    { name: 'ANA REYES', username: 'ana123', password: 'password123' }
+                ];
+
+                for (const student of students) {
+                    // Create student record
+                    const studentRef = await database.ref('students').push({
+                        name: student.name,
+                        dateAdded: new Date().toISOString()
+                    });
+                    
+                    // Create student account
+                    await database.ref('student_accounts').child(studentRef.key).set({
+                        username: student.username,
+                        password: student.password,
+                        name: student.name
+                    });
+                    
+                    // Create welcome notification
+                    await database.ref(`notifications/${studentRef.key}`).push({
+                        title: '🎉 Welcome!',
+                        message: 'Your student account has been created. You can now track your attendance.',
+                        type: 'welcome',
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        isRead: false,
+                        icon: '🎉',
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                    
+                    status.innerHTML += `<br>✅ Created: ${student.name}`;
+                }
+                
+                // 3. Create sample attendance for today
+                const today = new Date().toISOString().split('T')[0];
+                const studentsSnapshot = await database.ref('students').once('value');
+                
+                studentsSnapshot.forEach(async (studentSnapshot) => {
+                    const studentId = studentSnapshot.key;
+                    const studentName = studentSnapshot.val().name;
+                    
+                    // Random attendance for today
+                    const random = Math.random();
+                    let status = 'present';
+                    let time = null;
+                    
+                    if (random < 0.7) {
+                        status = 'present';
+                        time = '8:30 AM';
+                    } else if (random < 0.85) {
+                        status = 'absent';
+                    } else {
+                        status = 'late';
+                        time = '9:15 AM';
+                    }
+                    
+                    await database.ref(`attendance/${today}/${studentId}`).set({
+                        status: status,
+                        time: time,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
+                        studentName: studentName
+                    });
+                });
+                
+                status.innerHTML += '<br><br>✅ Database initialized successfully!';
+                status.innerHTML += '<br>📝 Teacher Login: teacher@school.com / teacher123';
+                status.innerHTML += '<br>📝 Student Login: carl123 / password123';
+                
+            } catch (error) {
+                status.innerHTML = '❌ Error: ' + error.message;
+                console.error(error);
+            }
+        }
+    </script>
+</body>
+</html>

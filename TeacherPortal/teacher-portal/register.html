@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMS PORTAL | Register</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f6f9fc 0%, #e9f0f5 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .portal-card {
+      max-width: 440px;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -8px rgba(0, 20, 30, 0.15), 0 4px 10px rgba(0, 0, 0, 0.02);
+      padding: 2.5rem 2.2rem 2.8rem 2.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(2px);
+    }
+
+    .sams-header {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+
+    .sams-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0b2b3b;
+      line-height: 1.1;
+    }
+
+    .portal-sub {
+      font-size: 1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      color: #5f7e91;
+      margin-top: 4px;
+      border-left: 3px solid #9bb8cc;
+      padding-left: 12px;
+    }
+
+    .register-heading {
+      margin: 1.8rem 0 1.2rem 0;
+      font-size: 1.6rem;
+      font-weight: 600;
+      color: #1b4f63;
+      letter-spacing: -0.3px;
+      border-bottom: 2px solid #d5e2ea;
+      padding-bottom: 0.5rem;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #1f4b5e;
+      opacity: 0.8;
+    }
+
+    .field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #d5e2ea;
+      padding: 0.7rem 0.2rem 0.6rem 0.2rem;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #0b3849;
+      transition: border 0.2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-bottom-color: #2d7a9c;
+    }
+
+    .field input::placeholder {
+      color: #a7bbc8;
+      font-weight: 300;
+      font-size: 1rem;
+    }
+
+    .register-btn {
+      background: #1b5f7a;
+      border: none;
+      width: 100%;
+      padding: 1rem 1rem;
+      border-radius: 60px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 18px -6px rgba(21, 80, 105, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin: 2rem 0 1.2rem 0;
+    }
+
+    .register-btn:hover {
+      background: #104c64;
+      box-shadow: 0 10px 22px -6px rgba(9, 60, 82, 0.5);
+    }
+
+    .register-btn:active {
+      transform: scale(0.98);
+      background: #0b3f53;
+    }
+
+    .account-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.4rem;
+      margin-bottom: 0.2rem;
+    }
+
+    .login-text {
+      font-size: 0.95rem;
+      color: #385f71;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .login-link {
+      font-weight: 600;
+      color: #0d4b65;
+      text-decoration: none;
+      border-bottom: 1.5px solid #b2d0df;
+      margin-left: 6px;
+      letter-spacing: 0.2px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+
+    .login-link:hover {
+      color: #022b39;
+      border-bottom-color: #0d4b65;
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #9bb3c0;
+      letter-spacing: 0.5px;
+      border-top: 1px dashed #d1e0e8;
+      padding-top: 1.2rem;
+    }
+
+    .footer-note span {
+      font-weight: 500;
+      color: #4d7487;
+    }
+
+    .success-message {
+      color: #1b5f7a;
+      background: #e3f0f7;
+      padding: 0.8rem;
+      border-radius: 50px;
+      text-align: center;
+      font-weight: 500;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+      border: 1px solid #b2d0df;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .error-message {
+      color: #b13e3e;
+      font-size: 0.75rem;
+      margin-top: 0.2rem;
+      min-height: 1.2rem;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-card">
+    <div class="sams-header">
+      <div class="sams-title">SAMS</div>
+      <div class="portal-sub">PORTAL</div>
+    </div>
+
+    <div class="register-heading">REGISTER</div>
+
+    <div class="input-group">
+      <div class="field">
+        <label for="fullname">Full Name</label>
+        <input type="text" id="fullname" placeholder="e.g., John Doe">
+        <div class="error-message" id="fullnameError"></div>
+      </div>
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="choose a username">
+        <div class="error-message" id="usernameError"></div>
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="··········">
+        <div class="error-message" id="passwordError"></div>
+      </div>
+      <div class="field">
+        <label for="confirm-password">Confirm Password</label>
+        <input type="password" id="confirm-password" placeholder="··········">
+        <div class="error-message" id="confirmError"></div>
+      </div>
+    </div>
+
+    <button class="register-btn" id="registerBtn" type="button">REGISTER</button>
+
+    <div class="account-row">
+      <div class="login-text">
+        Already have an account?
+        <a href="login.html" class="login-link">Login</a>
+      </div>
+    </div>
+
+    <div class="success-message" id="successMessage">
+      ✓ Registration successful! Redirecting to login...
+    </div>
+
+    <div class="footer-note">
+      <span>SAMS</span> – secure portal access
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const fullnameInput = document.getElementById('fullname');
+      const usernameInput = document.getElementById('username');
+      const passwordInput = document.getElementById('password');
+      const confirmInput = document.getElementById('confirm-password');
+      
+      const fullnameError = document.getElementById('fullnameError');
+      const usernameError = document.getElementById('usernameError');
+      const passwordError = document.getElementById('passwordError');
+      const confirmError = document.getElementById('confirmError');
+      
+      const registerBtn = document.getElementById('registerBtn');
+      const successMsg = document.getElementById('successMessage');
+
+      // Initialize users array if not exists
+      if (!localStorage.getItem('sams_users')) {
+        localStorage.setItem('sams_users', JSON.stringify([]));
+      }
+
+      function clearErrors() {
+        fullnameError.textContent = '';
+        usernameError.textContent = '';
+        passwordError.textContent = '';
+        confirmError.textContent = '';
+      }
+
+      function validateForm() {
+        let isValid = true;
+        clearErrors();
+        successMsg.classList.remove('show');
+
+        // Full name validation
+        if (!fullnameInput.value.trim()) {
+          fullnameError.textContent = 'Full name is required';
+          isValid = false;
+        } else if (fullnameInput.value.trim().length < 2) {
+          fullnameError.textContent = 'Name must be at least 2 characters';
+          isValid = false;
+        }
+
+        // Username validation
+        if (!usernameInput.value.trim()) {
+          usernameError.textContent = 'Username is required';
+          isValid = false;
+        } else if (usernameInput.value.trim().length < 3) {
+          usernameError.textContent = 'Username must be at least 3 characters';
+          isValid = false;
+        } else {
+          // Check if username already exists
+          const users = JSON.parse(localStorage.getItem('sams_users') || '[]');
+          if (users.some(u => u.username === usernameInput.value.trim())) {
+            usernameError.textContent = 'Username already exists';
+            isValid = false;
+          }
+        }
+
+        // Password validation
+        if (!passwordInput.value) {
+          passwordError.textContent = 'Password is required';
+          isValid = false;
+        } else if (passwordInput.value.length < 6) {
+          passwordError.textContent = 'Password must be at least 6 characters';
+          isValid = false;
+        }
+
+        // Confirm password validation
+        if (!confirmInput.value) {
+          confirmError.textContent = 'Please confirm your password';
+          isValid = false;
+        } else if (passwordInput.value !== confirmInput.value) {
+          confirmError.textContent = 'Passwords do not match';
+          isValid = false;
+        }
+
+        return isValid;
+      }
+
+      registerBtn.addEventListener('click', function() {
+        if (validateForm()) {
+          // Get existing users
+          const users = JSON.parse(localStorage.getItem('sams_users') || '[]');
+          
+          // Create new user
+          const newUser = {
+            fullname: fullnameInput.value.trim(),
+            username: usernameInput.value.trim(),
+            password: passwordInput.value // In production, this should be hashed
+          };
+          
+          // Add to users array
+          users.push(newUser);
+          
+          // Save to localStorage
+          localStorage.setItem('sams_users', JSON.stringify(users));
+          
+          // Show success message
+          successMsg.classList.add('show');
+          
+          // Clear form
+          fullnameInput.value = '';
+          usernameInput.value = '';
+          passwordInput.value = '';
+          confirmInput.value = '';
+          
+          // Redirect to login after 2 seconds
+          setTimeout(() => {
+            window.location.href = 'login.html';
+          }, 2000);
+        }
+      });
+
+      // Real-time validation
+      confirmInput.addEventListener('input', function() {
+        if (passwordInput.value && confirmInput.value) {
+          if (passwordInput.value !== confirmInput.value) {
+            confirmError.textContent = 'Passwords do not match';
+          } else {
+            confirmError.textContent = '';
+          }
+        }
+      });
+
+      // Clear errors on input
+      fullnameInput.addEventListener('input', () => fullnameError.textContent = '');
+      usernameInput.addEventListener('input', () => usernameError.textContent = '');
+      passwordInput.addEventListener('input', () => {
+        passwordError.textContent = '';
+        if (confirmInput.value && passwordInput.value !== confirmInput.value) {
+          confirmError.textContent = 'Passwords do not match';
+        } else {
+          confirmError.textContent = '';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

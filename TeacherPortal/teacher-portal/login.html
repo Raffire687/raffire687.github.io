@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SAMS PORTAL | Login</title>
+  <style>
+    /* Same styles as before */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(145deg, #f6f9fc 0%, #e9f0f5 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+
+    .portal-card {
+      max-width: 440px;
+      width: 100%;
+      background-color: #ffffff;
+      border-radius: 32px;
+      box-shadow: 0 20px 35px -8px rgba(0, 20, 30, 0.15), 0 4px 10px rgba(0, 0, 0, 0.02);
+      padding: 2.5rem 2.2rem 2.8rem 2.2rem;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(2px);
+    }
+
+    .sams-header {
+      text-align: left;
+      margin-bottom: 1rem;
+    }
+
+    .sams-title {
+      font-size: 2.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #0b2b3b;
+      line-height: 1.1;
+    }
+
+    .portal-sub {
+      font-size: 1rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 6px;
+      color: #5f7e91;
+      margin-top: 4px;
+      border-left: 3px solid #9bb8cc;
+      padding-left: 12px;
+    }
+
+    .input-group {
+      margin-top: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .field label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #1f4b5e;
+      opacity: 0.8;
+    }
+
+    .field input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid #d5e2ea;
+      padding: 0.7rem 0.2rem 0.6rem 0.2rem;
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: #0b3849;
+      transition: border 0.2s;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-bottom-color: #2d7a9c;
+    }
+
+    .field input::placeholder {
+      color: #a7bbc8;
+      font-weight: 300;
+      font-size: 1rem;
+    }
+
+    .account-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.8rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .demo-account {
+      font-size: 0.85rem;
+      color: #1b5f7a;
+      background: #e3f0f7;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+    }
+
+    .register-text {
+      font-size: 0.95rem;
+      color: #385f71;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .register-link {
+      font-weight: 600;
+      color: #0d4b65;
+      text-decoration: none;
+      border-bottom: 1.5px solid #b2d0df;
+      margin-left: 6px;
+      letter-spacing: 0.2px;
+      transition: border-color 0.15s, color 0.15s;
+      cursor: pointer;
+    }
+
+    .register-link:hover {
+      color: #022b39;
+      border-bottom-color: #0d4b65;
+    }
+
+    .login-btn {
+      background: #1b5f7a;
+      border: none;
+      width: 100%;
+      padding: 1rem 1rem;
+      border-radius: 60px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      color: white;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 8px 18px -6px rgba(21, 80, 105, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      margin-top: 0.8rem;
+    }
+
+    .login-btn:hover {
+      background: #104c64;
+      box-shadow: 0 10px 22px -6px rgba(9, 60, 82, 0.5);
+    }
+
+    .error-message {
+      color: #b13e3e;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+
+    .success-message {
+      color: #1b5f7a;
+      background: #e3f0f7;
+      padding: 0.8rem;
+      border-radius: 50px;
+      text-align: center;
+      font-weight: 500;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .success-message.show {
+      display: block;
+    }
+
+    .footer-note {
+      margin-top: 2rem;
+      text-align: center;
+      font-size: 0.7rem;
+      color: #9bb3c0;
+      border-top: 1px dashed #d1e0e8;
+      padding-top: 1.2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="portal-card">
+    <div class="sams-header">
+      <div class="sams-title">SAMS</div>
+      <div class="portal-sub">PORTAL</div>
+    </div>
+
+    <div class="input-group">
+      <div class="field">
+        <label for="username">Username</label>
+        <input type="text" id="username" placeholder="Enter your username">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" placeholder="··········">
+      </div>
+    </div>
+
+    <div class="account-row">
+      <span class="demo-account">Demo: teacher / teacher123</span>
+      <div class="register-text">
+        <a href="register.html" class="register-link">Register</a>
+      </div>
+    </div>
+
+    <div id="loginError" class="error-message"></div>
+    <div id="successMessage" class="success-message">✓ Login successful! Redirecting...</div>
+
+    <button class="login-btn" id="loginBtn" type="button">LOGIN</button>
+
+    <div class="footer-note">
+      <span>SAMS</span> – teacher attendance portal
+    </div>
+  </div>
+
+  <script>
+    // Initialize default teacher account if not exists
+    if (!localStorage.getItem('sams_users')) {
+      const defaultUsers = [
+        {
+          fullname: 'Teacher Account',
+          username: 'teacher',
+          password: 'teacher123'
+        }
+      ];
+      localStorage.setItem('sams_users', JSON.stringify(defaultUsers));
+    }
+
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
+    const successMsg = document.getElementById('successMessage');
+
+    sessionStorage.removeItem('currentUser');
+
+    loginBtn.addEventListener('click', function() {
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value;
+
+      loginError.textContent = '';
+      successMsg.classList.remove('show');
+
+      if (!username || !password) {
+        loginError.textContent = 'Please enter both username and password';
+        return;
+      }
+
+      const users = JSON.parse(localStorage.getItem('sams_users') || '[]');
+      const user = users.find(u => u.username === username && u.password === password);
+
+      if (user) {
+        successMsg.classList.add('show');
+        loginError.textContent = '';
+        
+        sessionStorage.setItem('currentUser', JSON.stringify({
+          fullname: user.fullname,
+          username: user.username
+        }));
+        
+        setTimeout(() => {
+          window.location.href = 'attendance-report.html';
+        }, 1500);
+      } else {
+        loginError.textContent = 'Invalid username or password';
+      }
+    });
+
+    passwordInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        loginBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>

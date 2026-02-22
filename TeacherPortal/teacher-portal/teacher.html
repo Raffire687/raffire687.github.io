@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Portal - SAMS</title>
+    <link rel="stylesheet" href="teacher.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <!-- Login Section -->
+    <div id="loginSection" class="auth-container">
+        <div class="auth-card">
+            <img src="sams.png" alt="SAMS Logo" class="logo">
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="loginEmail" class="form-control" placeholder="teacher@school.com" value="teacher@school.com">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="······" value="teacher123">
+            </div>
+
+            <div class="link-text">
+                Don't have an account? <a href="#" onclick="showRegister()">Register</a>
+            </div>
+
+            <button class="btn btn-primary" onclick="handleLogin()">LOGIN</button>
+            <div id="loginError" class="alert alert-error"></div>
+        </div>
+    </div>
+
+    <!-- Register Section -->
+    <div id="registerSection" class="auth-container" style="display: none;">
+        <div class="auth-card">
+            <img src="sams.png" alt="SAMS Logo" class="logo">
+            <h2 class="auth-title">REGISTER</h2>
+            
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" id="regName" class="form-control" placeholder="Enter your name">
+            </div>
+
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="regEmail" class="form-control" placeholder="teacher@school.com">
+            </div>
+
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 characters">
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" id="regConfirm" class="form-control" placeholder="······">
+            </div>
+
+            <div class="link-text">
+                Already have an account? <a href="#" onclick="showLogin()">Login</a>
+            </div>
+
+            <button class="btn btn-primary" onclick="handleRegister()">REGISTER</button>
+            <div id="registerError" class="alert alert-error"></div>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardSection" style="display: none;">
+        <!-- Navigation -->
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="sams.png" alt="SAMS" class="nav-logo">
+            </div>
+            <div class="nav-menu">
+                <button class="nav-link active" onclick="showTab('attendance')">Attendance</button>
+                <button class="nav-link" onclick="showTab('students')">Students</button>
+                <button class="nav-link" onclick="showTab('subjects')">Subjects</button>
+                <button class="nav-link" onclick="showTab('reports')">Reports</button>
+            </div>
+            <div class="nav-user">
+                <span id="teacherName">Teacher</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="container">
+            <!-- Attendance Tab -->
+            <div id="attendanceTab" class="tab-content">
+                <h2 class="page-title">ATTENDANCE MANAGEMENT</h2>
+                
+                <div class="filters-card">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>SELECT DATE</label>
+                            <input type="date" id="attendanceDate" class="form-control" onchange="loadAttendance()">
+                        </div>
+                        <div class="filter-group">
+                            <label>SELECT SUBJECT</label>
+                            <select id="attendanceSubject" class="form-control" onchange="filterAttendanceBySubject()">
+                                <option value="">-- Choose a subject --</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-primary" onclick="loadAttendance()">REFRESH</button>
+                        </div>
+                    </div>
+                    <div class="sync-status">
+                        <span id="syncStatus">● LIVE</span>
+                    </div>
+                </div>
+
+                <!-- Subject Info Card -->
+                <div id="selectedSubjectCard" class="subject-info-card" style="display: none;">
+                    <div class="subject-info-content">
+                        <div class="subject-icon">📚</div>
+                        <div class="subject-details">
+                            <h3 id="selectedSubjectName">Subject Name</h3>
+                            <p id="selectedSubjectDetails">Schedule • Room</p>
+                        </div>
+                        <div class="subject-badge" id="subjectStudentCount">0 students</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div id="quickActionsCard" class="quick-actions-card" style="display: none;">
+                    <div class="quick-actions-title">
+                        Quick Actions for <strong id="quickActionSubject">Subject</strong>
+                    </div>
+                    <div class="quick-actions-buttons">
+                        <button class="quick-action-btn present-all" onclick="markAllStudents('present')">
+                            <span>✅</span> Mark All Present
+                        </button>
+                        <button class="quick-action-btn absent-all" onclick="markAllStudents('absent')">
+                            <span>❌</span> Mark All Absent
+                        </button>
+                        <button class="quick-action-btn late-all" onclick="markAllStudents('late')">
+                            <span>⏰</span> Mark All Late
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="presentCount">0</div>
+                        <div class="stat-label">PRESENT</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="absentCount">0</div>
+                        <div class="stat-label">ABSENT</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="lateCount">0</div>
+                        <div class="stat-label">LATE</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalStudents">0</div>
+                        <div class="stat-label">TOTAL</div>
+                    </div>
+                </div>
+
+                <!-- Attendance Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID NUMBER</th>
+                                <th>STUDENT NAME</th>
+                                <th>STATUS</th>
+                                <th>TIME</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Students Tab -->
+            <div id="studentsTab" class="tab-content" style="display: none;">
+                <div class="tab-header">
+                    <h2 class="page-title">STUDENT MANAGEMENT</h2>
+                    <button class="btn btn-primary" onclick="showAddStudent()">+ ADD STUDENT</button>
+                </div>
+
+                <!-- Student Filters -->
+                <div class="filters-card">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>FILTER BY SUBJECT</label>
+                            <select id="studentSubjectFilter" class="form-control" onchange="filterStudentsBySubject()">
+                                <option value="">All Subjects</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>SEARCH</label>
+                            <input type="text" id="studentSearch" class="form-control" placeholder="Search by name or ID..." onkeyup="filterStudentsBySubject()">
+                        </div>
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <button class="btn btn-outline" onclick="clearStudentFilters()">CLEAR</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID NUMBER</th>
+                                <th>NAME</th>
+                                <th>USERNAME</th>
+                                <th>YEAR-SECTION</th>
+                                <th>SUBJECTS</th>
+                                <th>ATTENDANCE</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Subjects Tab -->
+            <div id="subjectsTab" class="tab-content" style="display: none;">
+                <div class="tab-header">
+                    <h2 class="page-title">SUBJECT MANAGEMENT</h2>
+                    <button class="btn btn-primary" onclick="showAddSubject()">+ ADD SUBJECT</button>
+                </div>
+
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>CODE</th>
+                                <th>SUBJECT NAME</th>
+                                <th>SCHEDULE</th>
+                                <th>ROOM</th>
+                                <th>UNITS</th>
+                                <th>STUDENTS</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="subjectsBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reportsTab" class="tab-content" style="display: none;">
+                <h2 class="page-title">ATTENDANCE REPORTS</h2>
+                
+                <div class="filters-card">
+                    <div class="filters-grid">
+                        <div class="filter-group">
+                            <label>REPORT TYPE</label>
+                            <select id="reportType" class="form-control" onchange="toggleReportDates()">
+                                <option value="daily">Daily Report</option>
+                                <option value="weekly">Weekly Report</option>
+                                <option value="monthly">Monthly Report</option>
+                                <option value="range">Custom Range</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group" id="singleDateContainer">
+                            <label>DATE</label>
+                            <input type="date" id="reportDate" class="form-control">
+                        </div>
+                        
+                        <div class="filter-group" id="dateRangeContainer" style="display: none;">
+                            <label>START DATE</label>
+                            <input type="date" id="startDate" class="form-control">
+                            <label>END DATE</label>
+                            <input type="date" id="endDate" class="form-control">
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>SUBJECT</label>
+                            <select id="reportSubject" class="form-control">
+                                <option value="">All Subjects</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <div class="button-group">
+                                <button class="btn btn-primary" onclick="generateReport()">GENERATE</button>
+                                <button class="btn btn-outline" onclick="exportReport()">EXPORT</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Stats -->
+                <div class="stats-grid" id="reportStats">
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">TOTAL DAYS</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0%</div>
+                        <div class="stat-label">AVG RATE</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">TOTAL PRESENT</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">TOTAL STUDENTS</div>
+                    </div>
+                </div>
+
+                <!-- Report Table -->
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>DATE</th>
+                                <th>SUBJECT</th>
+                                <th>PRESENT</th>
+                                <th>ABSENT</th>
+                                <th>LATE</th>
+                                <th>TOTAL</th>
+                                <th>RATE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Modal -->
+    <div id="studentModal" class="modal">
+        <div class="modal-content">
+            <h3 id="studentModalTitle">ADD NEW STUDENT</h3>
+            
+            <div class="form-group">
+                <label>FULL NAME <span class="required">*</span></label>
+                <input type="text" id="studentName" class="form-control" placeholder="Enter student's full name">
+                <small class="field-hint">e.g., JUAN DELA CRUZ</small>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>USERNAME <span class="required">*</span></label>
+                    <input type="text" id="studentUsername" class="form-control" placeholder="Username for login">
+                    <small class="field-hint">Student will use this to login</small>
+                </div>
+
+                <div class="form-group half">
+                    <label>PASSWORD <span class="required">*</span></label>
+                    <input type="text" id="studentPassword" class="form-control" value="student123">
+                    <small class="field-hint">Minimum 4 characters</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>YEAR LEVEL</label>
+                    <select id="studentYear" class="form-control">
+                        <option value="1">1st Year</option>
+                        <option value="2">2nd Year</option>
+                        <option value="3">3rd Year</option>
+                        <option value="4">4th Year</option>
+                    </select>
+                </div>
+
+                <div class="form-group half">
+                    <label>SECTION</label>
+                    <input type="text" id="studentSection" class="form-control" placeholder="e.g., A">
+                    <small class="field-hint">Enter section (A, B, C, etc.)</small>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>ASSIGN SUBJECTS</label>
+                <div id="subjectCheckboxes" class="checkbox-group">
+                    <!-- Dynamic checkboxes -->
+                </div>
+                <small class="field-hint">Select subjects this student is enrolled in</small>
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-outline" onclick="closeModal()">CANCEL</button>
+                <button class="btn btn-primary" onclick="addStudent()" id="saveStudentBtn">CREATE STUDENT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subject Modal -->
+    <div id="subjectModal" class="modal">
+        <div class="modal-content">
+            <h3 id="subjectModalTitle">ADD NEW SUBJECT</h3>
+            
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>SUBJECT CODE <span class="required">*</span></label>
+                    <input type="text" id="subjectCode" class="form-control" placeholder="e.g., MATH101">
+                    <small class="field-hint">Unique subject code</small>
+                </div>
+
+                <div class="form-group half">
+                    <label>SUBJECT NAME <span class="required">*</span></label>
+                    <input type="text" id="subjectName" class="form-control" placeholder="e.g., Calculus I">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group half">
+                    <label>SCHEDULE</label>
+                    <input type="text" id="subjectSchedule" class="form-control" placeholder="e.g., MW 8:00-9:30">
+                </div>
+
+                <div class="form-group half">
+                    <label>ROOM</label>
+                    <input type="text" id="subjectRoom" class="form-control" placeholder="e.g., RM 201">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>UNITS</label>
+                <input type="number" id="subjectUnits" class="form-control" value="3" min="1" max="5">
+            </div>
+            
+            <div class="modal-buttons">
+                <button class="btn btn-outline" onclick="closeSubjectModal()">CANCEL</button>
+                <button class="btn btn-primary" onclick="addSubject()" id="saveSubjectBtn">ADD SUBJECT</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="teacher.js"></script>
+</body>
+</html>
