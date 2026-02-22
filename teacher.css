@@ -101,6 +101,7 @@ select.form-control {
     appearance: none;
 }
 
+/* FIXED BUTTON STYLES */
 .btn {
     height: 44px;
     border-radius: 22px;
@@ -112,6 +113,8 @@ select.form-control {
     transition: all 0.3s ease;
     letter-spacing: 0.5px;
     width: 100%;
+    display: block;
+    text-align: center;
 }
 
 .btn-primary {
@@ -129,6 +132,8 @@ select.form-control {
     background: transparent;
     border: 2px solid var(--primary-blue);
     color: var(--primary-blue);
+    width: auto;
+    display: inline-block;
 }
 
 .btn-outline:hover {
