@@ -384,7 +384,7 @@ class FirebaseService {
         }
     }
 
-    // Mark all students
+    // Mark all students - FIXED AND ENHANCED
     async markAllStudents(date, subjectCode, students, status) {
         try {
             const timestamp = Date.now();
@@ -396,6 +396,7 @@ class FirebaseService {
             const notifications = {};
 
             students.forEach(student => {
+                // Update attendance
                 updates[`attendance/${date}/${student.id}/${subjectCode}`] = {
                     status: status,
                     time: time,
@@ -404,6 +405,7 @@ class FirebaseService {
                     subjectCode: subjectCode
                 };
 
+                // Create notifications for absent/late
                 if (status === 'absent' || status === 'late') {
                     const notificationId = this.db.ref(`notifications/${student.id}`).push().key;
                     notifications[`notifications/${student.id}/${notificationId}`] = {
@@ -420,8 +422,12 @@ class FirebaseService {
                 }
             });
 
-            await this.db.ref().update({ ...updates, ...notifications });
-            return { success: true };
+            // Apply all updates
+            if (Object.keys(updates).length > 0) {
+                await this.db.ref().update({ ...updates, ...notifications });
+            }
+            
+            return { success: true, count: students.length };
         } catch (error) {
             console.error('Error marking all students:', error);
             return { success: false, message: error.message };
