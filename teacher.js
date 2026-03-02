@@ -7,6 +7,49 @@ let editingStudentId = null;
 let editingSubjectId = null;
 let realtimeListeners = {};
 
+// ==================== PASSWORD TOGGLE FUNCTIONS ====================
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('loginPassword');
+    const toggleIcon = document.getElementById('togglePassword');
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.classList.remove('fa-eye-slash');
+        toggleIcon.classList.add('fa-eye');
+    } else {
+        passwordInput.type = 'password';
+        toggleIcon.classList.remove('fa-eye');
+        toggleIcon.classList.add('fa-eye-slash');
+    }
+}
+
+function toggleRegisterPasswordVisibility(inputId, icon) {
+    const passwordInput = document.getElementById(inputId);
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    }
+}
+
+function togglePasswordFieldVisibility(inputId, icon) {
+    const passwordInput = document.getElementById(inputId);
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        passwordInput.type = 'password';
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
 // ==================== INITIALIZATION ====================
 document.addEventListener('DOMContentLoaded', async () => {
     await initializeData();
