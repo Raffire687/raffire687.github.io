@@ -31,7 +31,9 @@
                 Don't have an account? <a href="#" onclick="showRegister()">Register</a>
             </div>
 
-            <button class="btn btn-primary login-btn" onclick="handleLogin()">LOGIN</button>
+            <div class="button-container">
+                <button class="btn btn-primary login-btn" onclick="handleLogin()">LOGIN</button>
+            </div>
             <div id="loginError" class="alert alert-error"></div>
         </div>
     </div>
@@ -72,7 +74,9 @@
                 Already have an account? <a href="#" onclick="showLogin()">Login</a>
             </div>
 
-            <button class="btn btn-primary login-btn" onclick="handleRegister()">REGISTER</button>
+            <div class="button-container">
+                <button class="btn btn-primary login-btn" onclick="handleRegister()">REGISTER</button>
+            </div>
             <div id="registerError" class="alert alert-error"></div>
         </div>
     </div>
@@ -376,8 +380,8 @@
                 <div class="form-group half">
                     <label>PASSWORD <span class="required">*</span></label>
                     <div class="password-wrapper">
-                        <input type="text" id="studentPassword" class="form-control password-input" value="student123">
-                        <i class="fas fa-eye eye-icon" onclick="togglePassword('studentPassword', this)"></i>
+                        <input type="password" id="studentPassword" class="form-control password-input" value="student123">
+                        <i class="fas fa-eye-slash eye-icon" onclick="togglePassword('studentPassword', this)"></i>
                     </div>
                     <small class="field-hint">Minimum 4 characters</small>
                 </div>
