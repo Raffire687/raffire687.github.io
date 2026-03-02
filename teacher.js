@@ -184,7 +184,7 @@ function showTab(tabName) {
     if (tabName === 'reports') generateReport();
 }
 
-// ==================== ENHANCED: SUBJECT MANAGEMENT ====================
+// ==================== SUBJECT MANAGEMENT ====================
 async function loadSubjects() {
     try {
         const snapshot = await database.ref('subjects').once('value');
@@ -264,7 +264,6 @@ function renderSubjectsTable() {
     tbody.innerHTML = html;
 }
 
-// ==================== ENHANCED: PUSH ANNOUNCEMENT ====================
 async function pushAnnouncement(subjectCode, subjectName) {
     const message = prompt(`Enter announcement for ${subjectCode} students:`, "Class will be held online today");
     if (!message) return;
@@ -391,7 +390,7 @@ async function deleteSubject(subjectId) {
     }
 }
 
-// ==================== ENHANCED: STUDENT MANAGEMENT ====================
+// ==================== STUDENT MANAGEMENT ====================
 async function loadStudents() {
     try {
         const snapshot = await database.ref('students').once('value');
@@ -500,7 +499,6 @@ function renderStudentsTable(students, accounts, attendance) {
     tbody.innerHTML = html;
 }
 
-// ==================== ENHANCED: PUSH STUDENT NOTIFICATION ====================
 async function pushStudentNotification(studentId, studentName) {
     const message = prompt(`Send notification to ${studentName}:`, "Please see me after class");
     if (!message) return;
@@ -701,7 +699,7 @@ async function deleteStudent(id) {
     }
 }
 
-// ==================== ENHANCED: ATTENDANCE MANAGEMENT ====================
+// ==================== ATTENDANCE MANAGEMENT ====================
 async function loadAttendance() {
     const date = document.getElementById('attendanceDate').value;
     const selectedSubject = document.getElementById('attendanceSubject').value;
@@ -844,18 +842,7 @@ async function updateAttendance(studentId, studentName, subjectCode, status) {
 // Helper function to show notifications
 function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: ${type === 'success' ? '#10B981' : '#3B82F6'};
-        color: white;
-        padding: 12px 24px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        z-index: 9999;
-        animation: slideIn 0.3s ease;
-    `;
+    notification.className = `notification-popup ${type}`;
     notification.textContent = message;
     document.body.appendChild(notification);
     
@@ -865,6 +852,7 @@ function showNotification(message, type = 'info') {
     }, 3000);
 }
 
+// ==================== FIXED: MARK ALL STUDENTS FUNCTION ====================
 async function markAllStudents(status) {
     const date = document.getElementById('attendanceDate').value;
     const subjectCode = document.getElementById('attendanceSubject').value;
@@ -874,10 +862,17 @@ async function markAllStudents(status) {
         return;
     }
 
-    if (!confirm(`Mark all students as ${status.toUpperCase()}?`)) return;
+    // Get students enrolled in this subject
+    const studentsList = students.filter(s => s.subjects?.some(sub => sub.subjectCode === subjectCode));
+    
+    if (studentsList.length === 0) {
+        alert('No students enrolled in this subject');
+        return;
+    }
+
+    if (!confirm(`Mark all ${studentsList.length} students as ${status.toUpperCase()}?`)) return;
 
     try {
-        const studentsList = students.filter(s => s.subjects?.some(sub => sub.subjectCode === subjectCode));
         const timestamp = Date.now();
         const time = status !== 'absent' 
             ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -886,6 +881,7 @@ async function markAllStudents(status) {
         const updates = {};
         const notifications = {};
 
+        // Prepare all updates
         studentsList.forEach(student => {
             // Update attendance
             updates[`attendance/${date}/${student.id}/${subjectCode}`] = {
@@ -916,11 +912,15 @@ async function markAllStudents(status) {
         // Apply all updates
         await database.ref().update({ ...updates, ...notifications });
         
+        // Reload attendance to show updated data
         await loadAttendance();
-        alert(`All ${studentsList.length} students marked as ${status}`);
+        
+        // Show success message
+        showNotification(`All ${studentsList.length} students marked as ${status}`, 'success');
+        
     } catch (error) {
         console.error('Error marking all students:', error);
-        alert('Failed to mark all students');
+        alert('Failed to mark all students: ' + error.message);
     }
 }
 
@@ -966,7 +966,7 @@ function clearStudentFilters() {
     loadStudents();
 }
 
-// ==================== ENHANCED: REPORTS ====================
+// ==================== REPORTS ====================
 function toggleReportDates() {
     const type = document.getElementById('reportType').value;
     document.getElementById('singleDateContainer').style.display = type === 'range' ? 'none' : 'block';
@@ -1148,33 +1148,6 @@ function exportReport() {
     a.download = `attendance_report_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
 }
-
-// Add CSS animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-    
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
 
 // ==================== CHECK AUTH ====================
 function checkAuth() {
