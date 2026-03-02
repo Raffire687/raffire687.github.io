@@ -101,7 +101,7 @@ select.form-control {
     appearance: none;
 }
 
-/* FIXED BUTTON STYLES */
+/* Button Styles */
 .btn {
     height: 44px;
     border-radius: 22px;
@@ -714,5 +714,53 @@ select.form-control {
     
     .modal-content {
         padding: 20px;
+    }
+}
+
+/* Notification Styles */
+.notification-popup {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.notification-popup.success {
+    background: #10B981;
+}
+
+.notification-popup.error {
+    background: #EF4444;
+}
+
+.notification-popup.info {
+    background: #3B82F6;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(100%);
+        opacity: 0;
     }
 }
