@@ -8,9 +8,11 @@ let editingSubjectId = null;
 let realtimeListeners = {};
 
 // ==================== PASSWORD TOGGLE FUNCTIONS ====================
-// Main toggle function called from HTML
+// Single function to handle all password toggles
 function togglePassword(inputId, iconElement) {
     const passwordInput = document.getElementById(inputId);
+    
+    if (!passwordInput || !iconElement) return;
     
     if (passwordInput.type === 'password') {
         passwordInput.type = 'text';
@@ -20,54 +22,6 @@ function togglePassword(inputId, iconElement) {
         passwordInput.type = 'password';
         iconElement.classList.remove('fa-eye');
         iconElement.classList.add('fa-eye-slash');
-    }
-}
-
-// Backup function for login password toggle
-function togglePasswordVisibility() {
-    const passwordInput = document.getElementById('loginPassword');
-    const toggleIcon = document.querySelector('#loginPassword + .eye-icon');
-    
-    if (passwordInput && toggleIcon) {
-        if (passwordInput.type === 'password') {
-            passwordInput.type = 'text';
-            toggleIcon.classList.remove('fa-eye-slash');
-            toggleIcon.classList.add('fa-eye');
-        } else {
-            passwordInput.type = 'password';
-            toggleIcon.classList.remove('fa-eye');
-            toggleIcon.classList.add('fa-eye-slash');
-        }
-    }
-}
-
-// Function for register password fields
-function toggleRegisterPasswordVisibility(inputId, icon) {
-    const passwordInput = document.getElementById(inputId);
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    }
-}
-
-// Function for student modal password field
-function togglePasswordFieldVisibility(inputId, icon) {
-    const passwordInput = document.getElementById(inputId);
-    
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    } else {
-        passwordInput.type = 'password';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
     }
 }
 
