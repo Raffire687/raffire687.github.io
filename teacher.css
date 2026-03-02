@@ -51,7 +51,7 @@ body {
     width: 160px;
     height: auto;
     display: block;
-    margin: 0 auto 20px;
+    margin: 0 auto 10px;
 }
 
 .auth-title {
@@ -73,6 +73,35 @@ body {
     margin-bottom: 6px;
     display: block;
     letter-spacing: 0.5px;
+}
+
+/* Password Field Styles */
+.password-field {
+    position: relative;
+}
+
+.password-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-input-container .form-control {
+    padding-right: 45px;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: #9CA3AF;
+    font-size: 18px;
+    transition: color 0.3s ease;
+    z-index: 10;
+}
+
+.password-toggle:hover {
+    color: var(--primary-blue);
 }
 
 .form-control {
@@ -115,6 +144,7 @@ select.form-control {
     width: 100%;
     display: block;
     text-align: center;
+    margin: 0 auto; /* Center the button */
 }
 
 .btn-primary {
@@ -145,7 +175,7 @@ select.form-control {
     text-align: center;
     color: #9CA3AF;
     font-size: 13px;
-    margin: 15px 0;
+    margin: 15px 0 25px 0;
 }
 
 .link-text a {
