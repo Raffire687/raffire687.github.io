@@ -5,21 +5,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Portal - SAMS</title>
     <link rel="stylesheet" href="teacher.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <!-- Login Section -->
     <div id="loginSection" class="auth-container">
         <div class="auth-card">
             <img src="sams.png" alt="SAMS Logo" class="logo">
+            <h2 class="auth-title">PORTAL</h2>
             
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" id="loginEmail" class="form-control" placeholder="teacher@school.com" value="teacher@school.com">
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-field">
                 <label>Password</label>
-                <input type="password" id="loginPassword" class="form-control" placeholder="······" value="teacher123">
+                <div class="password-input-container">
+                    <input type="password" id="loginPassword" class="form-control" placeholder="········" value="teacher123">
+                    <i class="fas fa-eye-slash password-toggle" id="togglePassword" onclick="togglePasswordVisibility()"></i>
+                </div>
             </div>
 
             <div class="link-text">
@@ -47,14 +52,20 @@
                 <input type="email" id="regEmail" class="form-control" placeholder="teacher@school.com">
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-field">
                 <label>Password</label>
-                <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 characters">
+                <div class="password-input-container">
+                    <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 characters">
+                    <i class="fas fa-eye-slash password-toggle" onclick="toggleRegisterPasswordVisibility('regPassword', this)"></i>
+                </div>
             </div>
 
-            <div class="form-group">
+            <div class="form-group password-field">
                 <label>Confirm Password</label>
-                <input type="password" id="regConfirm" class="form-control" placeholder="······">
+                <div class="password-input-container">
+                    <input type="password" id="regConfirm" class="form-control" placeholder="········">
+                    <i class="fas fa-eye-slash password-toggle" onclick="toggleRegisterPasswordVisibility('regConfirm', this)"></i>
+                </div>
             </div>
 
             <div class="link-text">
@@ -362,9 +373,12 @@
                     <small class="field-hint">Student will use this to login</small>
                 </div>
 
-                <div class="form-group half">
+                <div class="form-group half password-field">
                     <label>PASSWORD <span class="required">*</span></label>
-                    <input type="text" id="studentPassword" class="form-control" value="student123">
+                    <div class="password-input-container">
+                        <input type="text" id="studentPassword" class="form-control" value="student123">
+                        <i class="fas fa-eye password-toggle" onclick="togglePasswordFieldVisibility('studentPassword', this)"></i>
+                    </div>
                     <small class="field-hint">Minimum 4 characters</small>
                 </div>
             </div>
