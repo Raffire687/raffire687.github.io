@@ -153,12 +153,20 @@ select.form-control {
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
 }
 
-/* Login button specific centering */
-.login-btn {
-    display: block;
+/* Button Container - Centers the button */
+.button-container {
+    display: flex;
+    justify-content: center;
     width: 100%;
-    margin: 0 auto;
+    margin: 10px 0;
+}
+
+/* Login button specific styling */
+.login-btn {
+    display: inline-block;
+    min-width: 200px; /* Fixed width for consistent centering */
     text-align: center;
+    margin: 0 auto;
 }
 
 .btn-outline {
@@ -747,6 +755,10 @@ select.form-control {
     
     .modal-content {
         padding: 20px;
+    }
+
+    .login-btn {
+        min-width: 100%; /* Full width on mobile */
     }
 }
 
