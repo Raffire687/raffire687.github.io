@@ -2,33 +2,102 @@
 <html>
 <head>
     <title>Initialize Firebase Database</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #0C3778;
+        }
+        button {
+            background: #2A5C8A;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            background: #1e4a70;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        #status {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            white-space: pre-line;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+        }
+        .success { color: #10B981; font-weight: bold; }
+        .info { color: #2A5C8A; font-weight: bold; }
+        .warning { color: #F59E0B; font-weight: bold; }
+        .error { color: #EF4444; font-weight: bold; }
+    </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
-    <h1>Firebase Database Initializer</h1>
+    <h1>🔥 Firebase Database Initializer</h1>
+    <p>Click the button below to initialize your Firebase database with sample data:</p>
     <button onclick="initializeDatabase()">Initialize Database</button>
-    <div id="status"></div>
+    <div style="margin: 10px 0;">
+        <button onclick="clearDatabase()" style="background: #EF4444;">⚠️ Clear All Data</button>
+    </div>
+    <div id="status">Ready to initialize...</div>
 
     <script>
-        // Your Firebase config - REPLACE WITH YOUR ACTUAL CONFIG
+        // Your Firebase config - USING YOUR ACTUAL CONFIG
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            databaseURL: "https://mobileposfinal-8e080-default-rtdb.firebaseio.com/",
+            apiKey: "AIzaSyCjk2uYHEsPnIT7sk-hIxKnNar-BaepHac",
+            authDomain: "mobileposfinal-8e080.firebaseapp.com",
+            databaseURL: "https://mobileposfinal-8e080-default-rtdb.firebaseio.com",
             projectId: "mobileposfinal-8e080",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            storageBucket: "mobileposfinal-8e080.appspot.com",
+            messagingSenderId: "1075468764824",
+            appId: "1:1075468764824:web:9c8a7b5f3d2e1a0b5c6d7e"
         };
 
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
 
+        async function clearDatabase() {
+            if (!confirm('⚠️ WARNING: This will DELETE ALL DATA in your database. Are you sure?')) {
+                return;
+            }
+            
+            if (!confirm('FINAL WARNING: This action cannot be undone. Type "yes" to confirm.')) {
+                return;
+            }
+            
+            const status = document.getElementById('status');
+            status.innerHTML = '⏳ Clearing database...';
+            status.className = '';
+            
+            try {
+                await database.ref().set(null);
+                status.innerHTML = '<span class="success">✅ Database cleared successfully!</span>';
+            } catch (error) {
+                status.innerHTML = `<span class="error">❌ Error clearing database: ${error.message}</span>`;
+            }
+        }
+
         async function initializeDatabase() {
             const status = document.getElementById('status');
-            status.innerHTML = 'Initializing...';
+            status.innerHTML = '⏳ Initializing...';
+            status.className = '';
             
             try {
                 // 1. Create default teacher
@@ -39,18 +108,79 @@
                     createdAt: firebase.database.ServerValue.TIMESTAMP
                 });
                 
-                // 2. Create sample students with accounts
+                status.innerHTML += '<br><span class="success">✅</span> <strong>Teacher created:</strong> teacher@school.com / teacher123';
+                
+                // 2. Create sample subjects
+                const subjects = [
+                    { code: 'MATH101', name: 'Calculus I', schedule: 'MW 8:00-9:30', room: 'RM 201', units: 3 },
+                    { code: 'ENG102', name: 'English Composition', schedule: 'TTH 10:00-11:30', room: 'RM 105', units: 3 },
+                    { code: 'SCI103', name: 'Physics', schedule: 'MW 1:00-2:30', room: 'LAB 301', units: 4 },
+                    { code: 'HIST104', name: 'Philippine History', schedule: 'F 9:00-12:00', room: 'RM 110', units: 3 },
+                    { code: 'CS201', name: 'Programming Fundamentals', schedule: 'TTH 1:00-2:30', room: 'LAB 202', units: 3 }
+                ];
+
+                for (const subject of subjects) {
+                    await database.ref('subjects').push(subject);
+                    status.innerHTML += `<br><span class="success">✅</span> <strong>Subject created:</strong> ${subject.code} - ${subject.name}`;
+                }
+                
+                // 3. Create sample students with accounts
                 const students = [
-                    { name: 'CARL JUAN', username: 'carl123', password: 'password123' },
-                    { name: 'MARIA SANTOS', username: 'maria123', password: 'password123' },
-                    { name: 'JUAN DELA CRUZ', username: 'juan123', password: 'password123' },
-                    { name: 'ANA REYES', username: 'ana123', password: 'password123' }
+                    { 
+                        name: 'CARL JUAN', 
+                        username: 'carl123', 
+                        password: 'password123', 
+                        yearLevel: 1, 
+                        section: 'A',
+                        subjects: ['MATH101', 'ENG102', 'SCI103']
+                    },
+                    { 
+                        name: 'MARIA SANTOS', 
+                        username: 'maria123', 
+                        password: 'password123', 
+                        yearLevel: 2, 
+                        section: 'B',
+                        subjects: ['ENG102', 'HIST104', 'CS201']
+                    },
+                    { 
+                        name: 'JUAN DELA CRUZ', 
+                        username: 'juan123', 
+                        password: 'password123', 
+                        yearLevel: 1, 
+                        section: 'A',
+                        subjects: ['MATH101', 'SCI103', 'CS201']
+                    },
+                    { 
+                        name: 'ANA REYES', 
+                        username: 'ana123', 
+                        password: 'password123', 
+                        yearLevel: 3, 
+                        section: 'C',
+                        subjects: ['HIST104', 'CS201', 'ENG102']
+                    },
+                    { 
+                        name: 'PEDRO PENDOKO', 
+                        username: 'pedro123', 
+                        password: 'password123', 
+                        yearLevel: 2, 
+                        section: 'B',
+                        subjects: ['MATH101', 'SCI103', 'HIST104']
+                    }
                 ];
 
                 for (const student of students) {
+                    // Generate student ID number
+                    const year = new Date().getFullYear().toString().slice(-2);
+                    const randomNum = 200000 + Math.floor(Math.random() * 999);
+                    const studentIdNumber = `${year}-${randomNum}`;
+                    
                     // Create student record
                     const studentRef = await database.ref('students').push({
                         name: student.name,
+                        studentIdNumber: studentIdNumber,
+                        yearLevel: student.yearLevel,
+                        section: student.section,
+                        subjects: student.subjects.map(code => ({ subjectCode: code })),
                         dateAdded: new Date().toISOString()
                     });
                     
@@ -64,54 +194,71 @@
                     // Create welcome notification
                     await database.ref(`notifications/${studentRef.key}`).push({
                         title: '🎉 Welcome!',
-                        message: 'Your student account has been created. You can now track your attendance.',
+                        message: `Your account has been created. Student ID: ${studentIdNumber}`,
                         type: 'welcome',
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        isRead: false,
                         icon: '🎉',
+                        isRead: false,
+                        timestamp: firebase.database.ServerValue.TIMESTAMP,
                         date: new Date().toISOString().split('T')[0]
                     });
                     
-                    status.innerHTML += `<br>✅ Created: ${student.name}`;
+                    status.innerHTML += `<br><span class="success">✅</span> <strong>Student created:</strong> ${student.name} (${student.username} / ${student.password}) - ID: ${studentIdNumber}`;
                 }
                 
-                // 3. Create sample attendance for today
-                const today = new Date().toISOString().split('T')[0];
+                // 4. Create sample attendance for today and past days
+                const today = new Date();
                 const studentsSnapshot = await database.ref('students').once('value');
                 
-                studentsSnapshot.forEach(async (studentSnapshot) => {
-                    const studentId = studentSnapshot.key;
-                    const studentName = studentSnapshot.val().name;
+                for (let i = 0; i < 7; i++) {
+                    const date = new Date(today);
+                    date.setDate(date.getDate() - i);
+                    const dateStr = date.toISOString().split('T')[0];
                     
-                    // Random attendance for today
-                    const random = Math.random();
-                    let status = 'present';
-                    let time = null;
+                    // Skip weekends
+                    if (date.getDay() === 0 || date.getDay() === 6) continue;
                     
-                    if (random < 0.7) {
-                        status = 'present';
-                        time = '8:30 AM';
-                    } else if (random < 0.85) {
-                        status = 'absent';
-                    } else {
-                        status = 'late';
-                        time = '9:15 AM';
-                    }
-                    
-                    await database.ref(`attendance/${today}/${studentId}`).set({
-                        status: status,
-                        time: time,
-                        timestamp: firebase.database.ServerValue.TIMESTAMP,
-                        studentName: studentName
+                    studentsSnapshot.forEach(async (studentSnapshot) => {
+                        const studentId = studentSnapshot.key;
+                        const student = studentSnapshot.val();
+                        
+                        // For each subject the student is enrolled in
+                        if (student.subjects) {
+                            for (const subject of student.subjects) {
+                                // Random attendance for each day
+                                const random = Math.random();
+                                let status = 'present';
+                                let time = null;
+                                
+                                if (random < 0.7) {
+                                    status = 'present';
+                                    time = '8:30 AM';
+                                } else if (random < 0.85) {
+                                    status = 'absent';
+                                } else {
+                                    status = 'late';
+                                    time = '9:15 AM';
+                                }
+                                
+                                await database.ref(`attendance/${dateStr}/${studentId}/${subject.subjectCode}`).set({
+                                    status: status,
+                                    time: time,
+                                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                                    studentName: student.name,
+                                    subjectCode: subject.subjectCode
+                                });
+                            }
+                        }
                     });
-                });
+                }
                 
-                status.innerHTML += '<br><br>✅ Database initialized successfully!';
-                status.innerHTML += '<br>📝 Teacher Login: teacher@school.com / teacher123';
-                status.innerHTML += '<br>📝 Student Login: carl123 / password123';
+                status.innerHTML += '<br><br><span class="success">✅✅✅ DATABASE INITIALIZED SUCCESSFULLY! ✅✅✅</span>';
+                status.innerHTML += '<br><br><span class="info">📝 LOGIN CREDENTIALS:</span>';
+                status.innerHTML += '<br><span class="info">👨‍🏫 TEACHER: teacher@school.com / teacher123</span>';
+                status.innerHTML += '<br><span class="info">👨‍🎓 STUDENTS: (use any of the usernames above with password: password123)</span>';
+                status.innerHTML += '<br><br><span class="warning">⚠️ Note: Sample attendance data created for the last 7 days</span>';
                 
             } catch (error) {
-                status.innerHTML = '❌ Error: ' + error.message;
+                status.innerHTML = `<span class="error">❌ Error: ${error.message}</span>`;
                 console.error(error);
             }
         }
