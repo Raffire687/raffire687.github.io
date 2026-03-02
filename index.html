@@ -98,7 +98,7 @@
                         </div>
                         <div class="filter-group">
                             <label>SELECT SUBJECT</label>
-                            <select id="attendanceSubject" class="form-control" onchange="filterAttendanceBySubject()">
+                            <select id="attendanceSubject" class="form-control" onchange="loadAttendance()">
                                 <option value="">-- Choose a subject --</option>
                             </select>
                         </div>
@@ -124,7 +124,7 @@
                     </div>
                 </div>
 
-                <!-- Quick Actions -->
+                <!-- Quick Actions - MARK ALL BUTTONS -->
                 <div id="quickActionsCard" class="quick-actions-card" style="display: none;">
                     <div class="quick-actions-title">
                         Quick Actions for <strong id="quickActionSubject">Subject</strong>
@@ -444,7 +444,7 @@
         </div>
     </div>
 
-    <!-- Scripts - FIXED ORDER -->
+    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="firebase-config.js"></script>
