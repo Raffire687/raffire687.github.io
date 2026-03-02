@@ -64,6 +64,7 @@ body {
 
 .form-group {
     margin-bottom: 20px;
+    position: relative;
 }
 
 .form-group label {
@@ -76,23 +77,21 @@ body {
 }
 
 /* Password Field Styles */
-.password-field {
+.password-wrapper {
     position: relative;
+    width: 100%;
 }
 
-.password-input-container {
-    position: relative;
-    display: flex;
-    align-items: center;
+.password-input {
+    width: 100%;
+    padding-right: 45px !important;
 }
 
-.password-input-container .form-control {
-    padding-right: 45px;
-}
-
-.password-toggle {
+.eye-icon {
     position: absolute;
     right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     color: #9CA3AF;
     font-size: 18px;
@@ -100,7 +99,7 @@ body {
     z-index: 10;
 }
 
-.password-toggle:hover {
+.eye-icon:hover {
     color: var(--primary-blue);
 }
 
@@ -141,10 +140,6 @@ select.form-control {
     padding: 0 24px;
     transition: all 0.3s ease;
     letter-spacing: 0.5px;
-    width: 100%;
-    display: block;
-    text-align: center;
-    margin: 0 auto; /* Center the button */
 }
 
 .btn-primary {
@@ -156,6 +151,14 @@ select.form-control {
     background: #1e4a70;
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* Login button specific centering */
+.login-btn {
+    display: block;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
 }
 
 .btn-outline {
