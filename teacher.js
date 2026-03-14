@@ -8,7 +8,6 @@ let editingSubjectId = null;
 let realtimeListeners = {};
 
 // ==================== PASSWORD TOGGLE FUNCTIONS ====================
-// Single function to handle all password toggles
 function togglePassword(inputId, iconElement) {
     const passwordInput = document.getElementById(inputId);
     
@@ -46,14 +45,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==================== DATA INITIALIZATION ====================
 async function initializeData() {
     try {
-        const teachersSnapshot = await database.ref('teachers').once('value');
-        if (!teachersSnapshot.exists()) {
-            await database.ref('teachers').push({
-                name: 'Teacher Account',
-                email: 'teacher@school.com',
-                password: 'teacher123'
-            });
-        }
+        console.log('Firebase Service initialized');
     } catch (error) {
         console.error('Error initializing data:', error);
     }
@@ -61,22 +53,28 @@ async function initializeData() {
 
 // ==================== REALTIME LISTENERS ====================
 function setupRealtimeListeners() {
-    // Listen for new students
-    database.ref('students').on('child_added', () => {
-        loadStudents();
+    if (!firebaseService.currentTeacher) return;
+    
+    const teacherId = firebaseService.currentTeacher.id;
+    
+    if (realtimeListeners.students) {
+        database.ref(`teacher_data/${teacherId}/students`).off('value', realtimeListeners.students);
+    }
+    
+    if (realtimeListeners.subjects) {
+        database.ref(`teacher_data/${teacherId}/subjects`).off('value', realtimeListeners.subjects);
+    }
+    
+    realtimeListeners.students = database.ref(`teacher_data/${teacherId}/students`).on('value', () => {
+        if (document.getElementById('studentsTab').style.display !== 'none') {
+            loadStudents();
+        }
     });
     
-    database.ref('students').on('child_changed', () => {
-        loadStudents();
-    });
-    
-    // Listen for new subjects
-    database.ref('subjects').on('child_added', () => {
-        loadSubjects();
-    });
-    
-    database.ref('subjects').on('child_changed', () => {
-        loadSubjects();
+    realtimeListeners.subjects = database.ref(`teacher_data/${teacherId}/subjects`).on('value', () => {
+        if (document.getElementById('subjectsTab').style.display !== 'none') {
+            loadSubjects();
+        }
     });
 }
 
@@ -84,11 +82,18 @@ function setupRealtimeListeners() {
 function showRegister() {
     document.getElementById('loginSection').style.display = 'none';
     document.getElementById('registerSection').style.display = 'flex';
+    clearAuthErrors();
 }
 
 function showLogin() {
     document.getElementById('registerSection').style.display = 'none';
     document.getElementById('loginSection').style.display = 'flex';
+    clearAuthErrors();
+}
+
+function clearAuthErrors() {
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('registerError').style.display = 'none';
 }
 
 async function handleLogin() {
@@ -96,35 +101,38 @@ async function handleLogin() {
     const password = document.getElementById('loginPassword').value;
     const errorDiv = document.getElementById('loginError');
 
+    if (!email || !password) {
+        showError(errorDiv, 'Please enter email and password');
+        return;
+    }
+
     try {
-        const snapshot = await database.ref('teachers').orderByChild('email').equalTo(email).once('value');
-        const teachers = snapshot.val();
+        const teacher = await firebaseService.loginTeacher(email, password);
         
-        if (teachers) {
-            const teacherId = Object.keys(teachers)[0];
-            const teacher = teachers[teacherId];
+        if (teacher) {
+            currentTeacher = teacher;
+            localStorage.setItem('current_teacher', JSON.stringify(currentTeacher));
             
-            if (teacher.password === password) {
-                currentTeacher = { id: teacherId, ...teacher };
-                localStorage.setItem('current_teacher', JSON.stringify(currentTeacher));
-                
-                document.getElementById('teacherName').textContent = teacher.name;
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
-                
-                await loadStudents();
-                await loadSubjects();
-                await loadAttendance();
-                
-                errorDiv.style.display = 'none';
-            } else {
-                showError(errorDiv, 'Invalid password');
-            }
+            document.getElementById('teacherName').textContent = teacher.name;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            
+            subjects = [];
+            students = [];
+            
+            await loadStudents();
+            await loadSubjects();
+            await loadAttendance();
+            
+            setupRealtimeListeners();
+            
+            errorDiv.style.display = 'none';
+            showNotification(`Welcome back, ${teacher.name}!`, 'success');
         } else {
-            showError(errorDiv, 'Email not found');
+            showError(errorDiv, 'Invalid email or password');
         }
     } catch (error) {
-        showError(errorDiv, 'Login failed');
+        showError(errorDiv, 'Login failed: ' + error.message);
     }
 }
 
@@ -141,7 +149,7 @@ async function handleRegister() {
     }
 
     if (password.length < 6) {
-        showError(errorDiv, 'Password must be 6+ characters');
+        showError(errorDiv, 'Password must be at least 6 characters');
         return;
     }
 
@@ -151,22 +159,20 @@ async function handleRegister() {
     }
 
     try {
-        const snapshot = await database.ref('teachers').orderByChild('email').equalTo(email).once('value');
-        if (snapshot.exists()) {
-            showError(errorDiv, 'Email already exists');
-            return;
+        const result = await firebaseService.registerTeacher(name, email, password);
+        
+        if (result.success) {
+            alert('Registration successful! Please login with your new account.');
+            showLogin();
+            document.getElementById('regName').value = '';
+            document.getElementById('regEmail').value = '';
+            document.getElementById('regPassword').value = '';
+            document.getElementById('regConfirm').value = '';
+        } else {
+            showError(errorDiv, result.message || 'Registration failed');
         }
-
-        await database.ref('teachers').push({
-            name: name,
-            email: email,
-            password: password
-        });
-
-        alert('Registration successful! Please login.');
-        showLogin();
     } catch (error) {
-        showError(errorDiv, 'Registration failed');
+        showError(errorDiv, 'Registration failed: ' + error.message);
     }
 }
 
@@ -181,8 +187,31 @@ function showError(element, message) {
 function logout() {
     localStorage.removeItem('current_teacher');
     currentTeacher = null;
+    firebaseService.currentTeacher = null;
+    firebaseService.clearLocalData();
+    
+    subjects = [];
+    students = [];
+    
     document.getElementById('dashboardSection').style.display = 'none';
     document.getElementById('loginSection').style.display = 'flex';
+    
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    
+    showNotification('Logged out successfully', 'info');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification-popup ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
 }
 
 // ==================== TAB NAVIGATION ====================
@@ -206,15 +235,7 @@ function showTab(tabName) {
 // ==================== SUBJECT MANAGEMENT ====================
 async function loadSubjects() {
     try {
-        const snapshot = await database.ref('subjects').once('value');
-        subjects = [];
-        snapshot.forEach(child => {
-            subjects.push({
-                id: child.key,
-                ...child.val()
-            });
-        });
-        
+        subjects = await firebaseService.getSubjects();
         updateSubjectDropdowns();
         renderSubjectsTable();
     } catch (error) {
@@ -254,7 +275,7 @@ function renderSubjectsTable() {
     const tbody = document.getElementById('subjectsBody');
     
     if (!subjects.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No subjects found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No subjects found. Click "ADD SUBJECT" to create one.</td></tr>';
         return;
     }
 
@@ -288,7 +309,6 @@ async function pushAnnouncement(subjectCode, subjectName) {
     if (!message) return;
     
     try {
-        // Get all students enrolled in this subject
         const enrolledStudents = students.filter(s => s.subjects?.some(sub => sub.subjectCode === subjectCode));
         
         if (enrolledStudents.length === 0) {
@@ -296,23 +316,13 @@ async function pushAnnouncement(subjectCode, subjectName) {
             return;
         }
         
-        let successCount = 0;
-        for (const student of enrolledStudents) {
-            await database.ref(`notifications/${student.id}`).push({
-                title: `📢 ${subjectCode} Announcement`,
-                message: message,
-                type: 'announcement',
-                subjectCode: subjectCode,
-                subjectName: subjectName,
-                timestamp: Date.now(),
-                isRead: false,
-                icon: '📢',
-                date: new Date().toISOString().split('T')[0]
-            });
-            successCount++;
-        }
+        const result = await firebaseService.pushAnnouncement(subjectCode, subjectName, message, enrolledStudents);
         
-        alert(`Announcement sent to ${successCount} students!`);
+        if (result.success) {
+            alert(`Announcement sent to ${result.count} students!`);
+        } else {
+            alert('Failed to send announcement');
+        }
     } catch (error) {
         console.error('Error sending announcement:', error);
         alert('Failed to send announcement');
@@ -333,8 +343,7 @@ function showAddSubject() {
 
 async function editSubject(subjectId) {
     try {
-        const snapshot = await database.ref('subjects').child(subjectId).once('value');
-        const subject = snapshot.val();
+        const subject = subjects.find(s => s.id === subjectId);
         
         if (subject) {
             editingSubjectId = subjectId;
@@ -371,38 +380,44 @@ async function addSubject() {
     }
 
     try {
-        const subjectData = {
-            code: code,
-            name: name,
-            teacher: currentTeacher?.name || 'Teacher',
-            schedule: schedule || 'TBA',
-            room: room || 'TBA',
-            units: units || 3
-        };
-
+        let result;
+        
         if (editingSubjectId) {
-            await database.ref('subjects').child(editingSubjectId).update(subjectData);
-            alert('Subject updated successfully!');
+            result = await firebaseService.updateSubject(editingSubjectId, code, name, schedule, room, units);
+            if (result.success) {
+                alert('Subject updated successfully!');
+            }
         } else {
-            await database.ref('subjects').push(subjectData);
-            alert('Subject added successfully!');
+            result = await firebaseService.addSubject(code, name, schedule, room, units);
+            if (result.success) {
+                alert('Subject added successfully!');
+            }
         }
 
-        await loadSubjects();
-        closeSubjectModal();
+        if (result.success) {
+            await loadSubjects();
+            closeSubjectModal();
+        } else {
+            alert(result.message || 'Failed to save subject');
+        }
     } catch (error) {
         console.error('Error saving subject:', error);
-        alert('Failed to save subject');
+        alert('Failed to save subject: ' + error.message);
     }
 }
 
 async function deleteSubject(subjectId) {
-    if (!confirm('Delete this subject?')) return;
+    if (!confirm('Delete this subject? This action cannot be undone.')) return;
 
     try {
-        await database.ref('subjects').child(subjectId).remove();
-        await loadSubjects();
-        alert('Subject deleted');
+        const result = await firebaseService.deleteSubject(subjectId);
+        
+        if (result.success) {
+            await loadSubjects();
+            alert('Subject deleted successfully');
+        } else {
+            alert(result.message || 'Failed to delete subject');
+        }
     } catch (error) {
         console.error('Error deleting subject:', error);
         alert('Failed to delete subject');
@@ -412,24 +427,8 @@ async function deleteSubject(subjectId) {
 // ==================== STUDENT MANAGEMENT ====================
 async function loadStudents() {
     try {
-        const snapshot = await database.ref('students').once('value');
-        students = [];
-        snapshot.forEach(child => {
-            students.push({
-                id: child.key,
-                ...child.val()
-            });
-        });
-
-        const accountsSnapshot = await database.ref('student_accounts').once('value');
-        const accounts = [];
-        accountsSnapshot.forEach(child => {
-            accounts.push({
-                studentId: child.key,
-                ...child.val()
-            });
-        });
-
+        students = await firebaseService.getStudents();
+        const accounts = await firebaseService.getStudentAccounts();
         const attendance = await getAllAttendanceRecords();
         renderStudentsTable(students, accounts, attendance);
     } catch (error) {
@@ -439,7 +438,10 @@ async function loadStudents() {
 
 async function getAllAttendanceRecords() {
     try {
-        const snapshot = await database.ref('attendance').once('value');
+        const teacherId = firebaseService.currentTeacher?.id;
+        if (!teacherId) return [];
+        
+        const snapshot = await database.ref(`teacher_data/${teacherId}/attendance`).once('value');
         const records = [];
         snapshot.forEach(dateSnapshot => {
             dateSnapshot.forEach(studentSnapshot => {
@@ -462,7 +464,7 @@ function renderStudentsTable(students, accounts, attendance) {
     const tbody = document.getElementById('studentsBody');
     
     if (!students.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No students found</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">No students found. Click "ADD STUDENT" to create one.</td></tr>';
         return;
     }
     
@@ -470,22 +472,18 @@ function renderStudentsTable(students, accounts, attendance) {
     students.forEach(student => {
         const account = accounts.find(a => a.studentId === student.id);
         
-        // Calculate attendance rate
         const studentRecords = attendance.filter(a => a.studentId === student.id);
         const totalSessions = studentRecords.length;
         const presentSessions = studentRecords.filter(a => a.status === 'present').length;
         const rate = totalSessions > 0 ? Math.round((presentSessions / totalSessions) * 100) : 0;
         
-        // Generate proper ID number
         let studentIdNumber = student.studentIdNumber;
         if (!studentIdNumber || studentIdNumber.includes('NaN')) {
             const year = new Date().getFullYear().toString().slice(-2);
             const randomNum = 200000 + Math.floor(Math.random() * 999);
             studentIdNumber = `${year}-${randomNum}`;
-            database.ref(`students/${student.id}/studentIdNumber`).set(studentIdNumber);
         }
         
-        // Format year-section
         const yearLevel = student.yearLevel || 1;
         const section = student.section || 'A';
         const yearSection = `${yearLevel}${section}`;
@@ -523,17 +521,13 @@ async function pushStudentNotification(studentId, studentName) {
     if (!message) return;
     
     try {
-        await database.ref(`notifications/${studentId}`).push({
-            title: '📌 Personal Message',
-            message: message,
-            type: 'personal',
-            timestamp: Date.now(),
-            isRead: false,
-            icon: '📌',
-            date: new Date().toISOString().split('T')[0]
-        });
+        const result = await firebaseService.pushPersonalNotification(studentId, studentName, message);
         
-        alert(`Notification sent to ${studentName}!`);
+        if (result.success) {
+            alert(`Notification sent to ${studentName}!`);
+        } else {
+            alert('Failed to send notification');
+        }
     } catch (error) {
         console.error('Error sending notification:', error);
         alert('Failed to send notification');
@@ -541,6 +535,12 @@ async function pushStudentNotification(studentId, studentName) {
 }
 
 function showAddStudent() {
+    if (!subjects.length) {
+        alert('Please add subjects first before creating students.');
+        showTab('subjects');
+        return;
+    }
+    
     editingStudentId = null;
     document.getElementById('studentModalTitle').textContent = 'ADD NEW STUDENT';
     document.getElementById('saveStudentBtn').textContent = 'CREATE STUDENT';
@@ -559,11 +559,9 @@ function showAddStudent() {
 
 async function editStudent(studentId) {
     try {
-        const studentSnapshot = await database.ref('students').child(studentId).once('value');
-        const student = studentSnapshot.val();
-        
-        const accountSnapshot = await database.ref('student_accounts').child(studentId).once('value');
-        const account = accountSnapshot.val();
+        const student = students.find(s => s.id === studentId);
+        const accounts = await firebaseService.getStudentAccounts();
+        const account = accounts.find(a => a.studentId === studentId);
         
         if (student) {
             editingStudentId = studentId;
@@ -593,6 +591,7 @@ function closeModal() {
     editingStudentId = null;
 }
 
+// ==================== FIXED: ADD STUDENT FUNCTION ====================
 async function addStudent() {
     const name = document.getElementById('studentName').value.trim().toUpperCase();
     const username = document.getElementById('studentUsername').value.trim().toLowerCase();
@@ -615,103 +614,60 @@ async function addStudent() {
         return;
     }
 
+    if (selectedSubjects.length === 0) {
+        alert('Please select at least one subject');
+        return;
+    }
+
     try {
+        let result;
+        
         if (editingStudentId) {
-            // Check if username exists for other students
-            const accountsSnapshot = await database.ref('student_accounts').orderByChild('username').equalTo(username).once('value');
-            if (accountsSnapshot.exists()) {
-                const existingId = Object.keys(accountsSnapshot.val())[0];
-                if (existingId !== editingStudentId) {
-                    alert('Username already exists');
-                    return;
-                }
+            result = await firebaseService.updateStudent(
+                editingStudentId, name, username, password, yearLevel, section, selectedSubjects
+            );
+            
+            if (result.success) {
+                alert('Student updated successfully!');
             }
-
-            await database.ref('students').child(editingStudentId).update({
-                name: name,
-                yearLevel: yearLevel,
-                section: section,
-                subjects: selectedSubjects.map(code => ({ subjectCode: code }))
-            });
-
-            await database.ref('student_accounts').child(editingStudentId).update({
-                username: username,
-                password: password,
-                name: name
-            });
-
-            alert('Student updated successfully!');
         } else {
-            // Check if username exists
-            const accountsSnapshot = await database.ref('student_accounts').orderByChild('username').equalTo(username).once('value');
-            if (accountsSnapshot.exists()) {
-                alert('Username already exists');
-                return;
+            result = await firebaseService.addStudent(
+                name, username, password, yearLevel, section, selectedSubjects
+            );
+            
+            if (result.success) {
+                alert(`Student created successfully! Username: ${username}, Password: ${password}`);
             }
-
-            const studentsSnapshot = await database.ref('students').once('value');
-            const studentCount = studentsSnapshot.numChildren() + 1;
-            const year = new Date().getFullYear().toString().slice(-2);
-            const studentIdNumber = `${year}-${200000 + studentCount}`;
-
-            const studentRef = await database.ref('students').push({
-                name: name,
-                studentIdNumber: studentIdNumber,
-                yearLevel: yearLevel,
-                section: section,
-                subjects: selectedSubjects.map(code => ({ subjectCode: code }))
-            });
-
-            await database.ref('student_accounts').child(studentRef.key).set({
-                username: username,
-                password: password,
-                name: name
-            });
-
-            await database.ref(`notifications/${studentRef.key}`).push({
-                title: '🎉 Welcome!',
-                message: `Account created. ID: ${studentIdNumber}`,
-                type: 'welcome',
-                timestamp: Date.now(),
-                isRead: false,
-                icon: '🎉'
-            });
-
-            alert(`Student created! ID: ${studentIdNumber}`);
         }
 
-        closeModal();
-        await loadStudents();
+        if (result.success) {
+            closeModal();
+            await loadStudents();
+            
+            if (!editingStudentId) {
+                showNotification(`Student created! Login: ${username} / ${password}`, 'success');
+            }
+        } else {
+            alert(result.message || 'Failed to save student');
+        }
     } catch (error) {
         console.error('Error saving student:', error);
-        alert('Failed to save student');
+        alert('Failed to save student: ' + error.message);
     }
 }
 
-async function deleteStudent(id) {
-    if (!confirm('Delete this student?')) return;
+async function deleteStudent(studentId) {
+    if (!confirm('Delete this student? This action cannot be undone.')) return;
 
     try {
-        await database.ref('students').child(id).remove();
-        await database.ref('student_accounts').child(id).remove();
-        await database.ref(`notifications/${id}`).remove();
+        const result = await firebaseService.deleteStudent(studentId);
         
-        // Remove attendance records
-        const attendanceSnapshot = await database.ref('attendance').once('value');
-        const updates = {};
-        attendanceSnapshot.forEach(dateSnapshot => {
-            const date = dateSnapshot.key;
-            if (dateSnapshot.child(id).exists()) {
-                updates[`attendance/${date}/${id}`] = null;
-            }
-        });
-        
-        if (Object.keys(updates).length > 0) {
-            await database.ref().update(updates);
+        if (result.success) {
+            await loadStudents();
+            alert('Student deleted successfully');
+        } else {
+            alert(result.message || 'Failed to delete student');
         }
-        
-        await loadStudents();
-        alert('Student deleted');
     } catch (error) {
         console.error('Error deleting student:', error);
         alert('Failed to delete student');
@@ -723,18 +679,27 @@ async function loadAttendance() {
     const date = document.getElementById('attendanceDate').value;
     const selectedSubject = document.getElementById('attendanceSubject').value;
 
+    if (!selectedSubject) {
+        document.getElementById('selectedSubjectCard').style.display = 'none';
+        document.getElementById('quickActionsCard').style.display = 'none';
+        document.getElementById('attendanceBody').innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px;">Please select a subject</td></tr>';
+        document.getElementById('presentCount').textContent = '0';
+        document.getElementById('absentCount').textContent = '0';
+        document.getElementById('lateCount').textContent = '0';
+        document.getElementById('totalStudents').textContent = '0';
+        return;
+    }
+
     try {
-        const studentsList = await getStudentsWithDetails();
-        const attendance = await getAttendanceByDate(date);
+        const studentsList = students.filter(s => s.subjects?.some(sub => sub.subjectCode === selectedSubject));
+        const attendance = await firebaseService.getAttendance(date);
 
         let present = 0, absent = 0, late = 0;
         let visibleStudents = [];
 
         if (selectedSubject) {
-            // Filter students by selected subject
-            visibleStudents = studentsList.filter(s => s.subjects?.some(sub => sub.subjectCode === selectedSubject));
+            visibleStudents = studentsList;
             
-            // Count stats for selected subject only
             visibleStudents.forEach(student => {
                 const record = attendance[student.id]?.[selectedSubject] || { status: 'present' };
                 if (record.status === 'present') present++;
@@ -742,7 +707,6 @@ async function loadAttendance() {
                 else if (record.status === 'late') late++;
             });
 
-            // Show subject info card
             const subject = subjects.find(s => s.code === selectedSubject);
             document.getElementById('selectedSubjectName').textContent = `${subject?.code} - ${subject?.name}`;
             document.getElementById('selectedSubjectDetails').textContent = `${subject?.schedule || 'TBA'} • ${subject?.room || 'TBA'}`;
@@ -765,15 +729,6 @@ async function loadAttendance() {
     } catch (error) {
         console.error('Error loading attendance:', error);
     }
-}
-
-async function getStudentsWithDetails() {
-    return students.sort((a, b) => a.name.localeCompare(b.name));
-}
-
-async function getAttendanceByDate(date) {
-    const snapshot = await database.ref('attendance').child(date).once('value');
-    return snapshot.val() || {};
 }
 
 function renderAttendanceTable(students, attendance, date, selectedSubject) {
@@ -819,56 +774,21 @@ function renderAttendanceTable(students, attendance, date, selectedSubject) {
 
 async function updateAttendance(studentId, studentName, subjectCode, status) {
     const date = document.getElementById('attendanceDate').value;
-    const time = status !== 'absent' 
-        ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-        : null;
 
     try {
-        await database.ref(`attendance/${date}/${studentId}/${subjectCode}`).set({
-            status: status,
-            time: time,
-            timestamp: Date.now(),
-            studentName: studentName,
-            subjectCode: subjectCode
-        });
-
-        if (status === 'absent' || status === 'late') {
-            const subject = subjects.find(s => s.code === subjectCode);
-            await database.ref(`notifications/${studentId}`).push({
-                title: status === 'absent' ? '⚠️ Absence Alert' : '⏰ Late Arrival',
-                message: `${subjectCode}: You were marked ${status} on ${new Date(date).toLocaleDateString()}`,
-                type: status,
-                subjectCode: subjectCode,
-                time: time,
-                timestamp: Date.now(),
-                isRead: false,
-                icon: status === 'absent' ? '⚠️' : '⏰',
-                date: date
-            });
-        }
-
-        await loadAttendance();
+        const result = await firebaseService.updateAttendance(studentId, studentName, date, subjectCode, status);
         
-        // Show success message
-        const statusMsg = status.charAt(0).toUpperCase() + status.slice(1);
-        showNotification(`${studentName} marked as ${statusMsg}`, 'success');
+        if (result.success) {
+            await loadAttendance();
+            const statusMsg = status.charAt(0).toUpperCase() + status.slice(1);
+            showNotification(`${studentName} marked as ${statusMsg}`, 'success');
+        } else {
+            alert('Failed to update attendance');
+        }
     } catch (error) {
         console.error('Error updating attendance:', error);
         alert('Failed to update attendance');
     }
-}
-
-// Helper function to show notifications
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.className = `notification-popup ${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-    
-    setTimeout(() => {
-        notification.style.animation = 'slideOut 0.3s ease';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
 }
 
 // ==================== MARK ALL STUDENTS FUNCTION ====================
@@ -881,7 +801,6 @@ async function markAllStudents(status) {
         return;
     }
 
-    // Get students enrolled in this subject
     const studentsList = students.filter(s => s.subjects?.some(sub => sub.subjectCode === subjectCode));
     
     if (studentsList.length === 0) {
@@ -892,59 +811,18 @@ async function markAllStudents(status) {
     if (!confirm(`Mark all ${studentsList.length} students as ${status.toUpperCase()}?`)) return;
 
     try {
-        const timestamp = Date.now();
-        const time = status !== 'absent' 
-            ? new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-            : null;
-
-        const updates = {};
-        const notifications = {};
-
-        // Prepare all updates
-        studentsList.forEach(student => {
-            // Update attendance
-            updates[`attendance/${date}/${student.id}/${subjectCode}`] = {
-                status: status,
-                time: time,
-                timestamp: timestamp,
-                studentName: student.name,
-                subjectCode: subjectCode
-            };
-
-            // Create notifications for absent/late
-            if (status === 'absent' || status === 'late') {
-                const notificationId = database.ref(`notifications/${student.id}`).push().key;
-                notifications[`notifications/${student.id}/${notificationId}`] = {
-                    title: status === 'absent' ? '⚠️ Absence Alert' : '⏰ Late Arrival',
-                    message: `${subjectCode}: You were marked ${status} on ${new Date(date).toLocaleDateString()}`,
-                    type: status,
-                    subjectCode: subjectCode,
-                    time: time,
-                    timestamp: timestamp,
-                    isRead: false,
-                    icon: status === 'absent' ? '⚠️' : '⏰',
-                    date: date
-                };
-            }
-        });
-
-        // Apply all updates
-        await database.ref().update({ ...updates, ...notifications });
+        const result = await firebaseService.markAllStudents(date, subjectCode, studentsList, status);
         
-        // Reload attendance to show updated data
-        await loadAttendance();
-        
-        // Show success message
-        showNotification(`All ${studentsList.length} students marked as ${status}`, 'success');
-        
+        if (result.success) {
+            await loadAttendance();
+            showNotification(`All ${result.count} students marked as ${status}`, 'success');
+        } else {
+            alert('Failed to mark all students: ' + result.message);
+        }
     } catch (error) {
         console.error('Error marking all students:', error);
         alert('Failed to mark all students: ' + error.message);
     }
-}
-
-function filterAttendanceBySubject() {
-    loadAttendance();
 }
 
 // ==================== STUDENT FILTERS ====================
@@ -952,7 +830,6 @@ function filterStudentsBySubject() {
     const subjectFilter = document.getElementById('studentSubjectFilter').value;
     const searchTerm = document.getElementById('studentSearch').value.toLowerCase();
     
-    // Filter students based on subject and search term
     const filteredStudents = students.filter(student => {
         const matchesSubject = !subjectFilter || student.subjects?.some(sub => sub.subjectCode === subjectFilter);
         const matchesSearch = !searchTerm || 
@@ -961,20 +838,11 @@ function filterStudentsBySubject() {
         return matchesSubject && matchesSearch;
     });
     
-    // Re-render with filtered students
     renderFilteredStudents(filteredStudents);
 }
 
 async function renderFilteredStudents(filteredStudents) {
-    const accountsSnapshot = await database.ref('student_accounts').once('value');
-    const accounts = [];
-    accountsSnapshot.forEach(child => {
-        accounts.push({
-            studentId: child.key,
-            ...child.val()
-        });
-    });
-
+    const accounts = await firebaseService.getStudentAccounts();
     const attendance = await getAllAttendanceRecords();
     renderStudentsTable(filteredStudents, accounts, attendance);
 }
@@ -1037,39 +905,7 @@ async function generateReport() {
 }
 
 async function getReportData(startDate, endDate, subjectFilter = '') {
-    const report = [];
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-    
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        const dateStr = d.toISOString().split('T')[0];
-        const attendance = await getAttendanceByDate(dateStr);
-        
-        let present = 0, absent = 0, late = 0;
-
-        Object.values(attendance).forEach(studentAttendance => {
-            Object.entries(studentAttendance).forEach(([subjectCode, record]) => {
-                if (!subjectFilter || subjectFilter === subjectCode) {
-                    if (record.status === 'present') present++;
-                    else if (record.status === 'absent') absent++;
-                    else if (record.status === 'late') late++;
-                }
-            });
-        });
-
-        if (present > 0 || absent > 0 || late > 0) {
-            report.push({
-                date: dateStr,
-                subject: subjectFilter || 'All Subjects',
-                present: present,
-                absent: absent,
-                late: late,
-                total: present + absent + late
-            });
-        }
-    }
-
-    return report;
+    return await firebaseService.generateReport(startDate, endDate, subjectFilter);
 }
 
 function renderReport(reportData) {
@@ -1106,7 +942,27 @@ function renderReport(reportData) {
 }
 
 function updateReportStats(reportData) {
-    if (!reportData.length) return;
+    if (!reportData.length) {
+        document.getElementById('reportStats').innerHTML = `
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">TOTAL DAYS</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0%</div>
+                <div class="stat-label">AVG RATE</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">0</div>
+                <div class="stat-label">TOTAL PRESENT</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${students.length}</div>
+                <div class="stat-label">TOTAL STUDENTS</div>
+            </div>
+        `;
+        return;
+    }
 
     const totalDays = reportData.length;
     const totalPresent = reportData.reduce((sum, day) => sum + day.present, 0);
@@ -1172,13 +1028,21 @@ function exportReport() {
 function checkAuth() {
     const savedTeacher = localStorage.getItem('current_teacher');
     if (savedTeacher) {
-        currentTeacher = JSON.parse(savedTeacher);
-        document.getElementById('teacherName').textContent = currentTeacher.name;
-        document.getElementById('loginSection').style.display = 'none';
-        document.getElementById('dashboardSection').style.display = 'block';
-        
-        loadStudents();
-        loadSubjects();
-        loadAttendance();
+        try {
+            currentTeacher = JSON.parse(savedTeacher);
+            firebaseService.currentTeacher = currentTeacher;
+            document.getElementById('teacherName').textContent = currentTeacher.name;
+            document.getElementById('loginSection').style.display = 'none';
+            document.getElementById('dashboardSection').style.display = 'block';
+            
+            loadStudents();
+            loadSubjects();
+            loadAttendance();
+            
+            setupRealtimeListeners();
+        } catch (error) {
+            console.error('Error restoring session:', error);
+            logout();
+        }
     }
 }
