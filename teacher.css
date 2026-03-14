@@ -164,7 +164,7 @@ select.form-control {
 /* Login button specific styling */
 .login-btn {
     display: inline-block;
-    min-width: 200px; /* Fixed width for consistent centering */
+    min-width: 200px;
     text-align: center;
     margin: 0 auto;
 }
@@ -758,7 +758,7 @@ select.form-control {
     }
 
     .login-btn {
-        min-width: 100%; /* Full width on mobile */
+        min-width: 100%;
     }
 }
 
