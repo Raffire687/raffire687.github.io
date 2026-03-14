@@ -58,7 +58,7 @@
     <div id="status">Ready to initialize...</div>
 
     <script>
-        // Your Firebase config - USING YOUR ACTUAL CONFIG
+        // Your Firebase config
         const firebaseConfig = {
             apiKey: "AIzaSyCjk2uYHEsPnIT7sk-hIxKnNar-BaepHac",
             authDomain: "mobileposfinal-8e080.firebaseapp.com",
@@ -110,7 +110,9 @@
                 
                 status.innerHTML += '<br><span class="success">✅</span> <strong>Teacher created:</strong> teacher@school.com / teacher123';
                 
-                // 2. Create sample subjects
+                const teacherId = teacherRef.key;
+                
+                // 2. Create sample subjects under teacher
                 const subjects = [
                     { code: 'MATH101', name: 'Calculus I', schedule: 'MW 8:00-9:30', room: 'RM 201', units: 3 },
                     { code: 'ENG102', name: 'English Composition', schedule: 'TTH 10:00-11:30', room: 'RM 105', units: 3 },
@@ -120,7 +122,7 @@
                 ];
 
                 for (const subject of subjects) {
-                    await database.ref('subjects').push(subject);
+                    await database.ref(`teacher_data/${teacherId}/subjects`).push(subject);
                     status.innerHTML += `<br><span class="success">✅</span> <strong>Subject created:</strong> ${subject.code} - ${subject.name}`;
                 }
                 
@@ -174,8 +176,8 @@
                     const randomNum = 200000 + Math.floor(Math.random() * 999);
                     const studentIdNumber = `${year}-${randomNum}`;
                     
-                    // Create student record
-                    const studentRef = await database.ref('students').push({
+                    // Create student record under teacher
+                    const studentRef = await database.ref(`teacher_data/${teacherId}/students`).push({
                         name: student.name,
                         studentIdNumber: studentIdNumber,
                         yearLevel: student.yearLevel,
@@ -184,8 +186,8 @@
                         dateAdded: new Date().toISOString()
                     });
                     
-                    // Create student account
-                    await database.ref('student_accounts').child(studentRef.key).set({
+                    // Create student account in global accounts
+                    await database.ref(`student_accounts/${studentRef.key}`).set({
                         username: student.username,
                         password: student.password,
                         name: student.name
@@ -207,7 +209,7 @@
                 
                 // 4. Create sample attendance for today and past days
                 const today = new Date();
-                const studentsSnapshot = await database.ref('students').once('value');
+                const studentsSnapshot = await database.ref(`teacher_data/${teacherId}/students`).once('value');
                 
                 for (let i = 0; i < 7; i++) {
                     const date = new Date(today);
@@ -239,6 +241,15 @@
                                     time = '9:15 AM';
                                 }
                                 
+                                // Save under teacher data
+                                await database.ref(`teacher_data/${teacherId}/attendance/${dateStr}/${studentId}/${subject.subjectCode}`).set({
+                                    status: status,
+                                    time: time,
+                                    timestamp: firebase.database.ServerValue.TIMESTAMP,
+                                    studentName: student.name
+                                });
+                                
+                                // Save under global attendance for student portal
                                 await database.ref(`attendance/${dateStr}/${studentId}/${subject.subjectCode}`).set({
                                     status: status,
                                     time: time,
